@@ -119,6 +119,7 @@ struct AlarmGatesView: View {
             Section("G8 custom quiet-then-loud sound (2 min)") {
                 Button("Schedule G8 in 2 min") { Task { await AlarmProbe.schedule(gate: "G8", at: .now + 120, sound: "probe_ramp.wav") } }
                 ResultButtons(gate: "G8", options: ["quiet-then-loud", "flat-loud", "default-sound", "silent", "chime-inaudible"])
+                ResultButtons(gate: "G8", options: ["vibrated", "no-vibration"])
             }
             Section("G5 re-ring after Stop (3 rounds)") {
                 Button("Arm G5 and schedule in 1 min") {
