@@ -53,6 +53,10 @@ targets:
     platform: iOS
     sources:
       - path: Tests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.anirudh.wakeprobe.tests
     dependencies:
       - target: WakeProbe
 schemes:
