@@ -1,0 +1,66 @@
+name: WakeProbe
+options:
+  deploymentTarget:
+    iOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: ""
+targets:
+  WakeProbe:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Shared
+    info:
+      path: App/Info.plist
+      properties:
+        UILaunchScreen: {}
+        CFBundleDisplayName: Wake Probe
+        NSAlarmKitUsageDescription: "Wake Probe schedules test alarms to check what this iPhone allows."
+        NSMotionUsageDescription: "Wake Probe reads step and motion history to test stillness detection."
+        NSLocationWhenInUseUsageDescription: "Wake Probe tests geofence timing."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Wake Probe tests geofence exits while closed."
+        NSLocationAlwaysUsageDescription: "Wake Probe tests geofence exits while closed."
+        NSSupportsLiveActivities: true
+        UIBackgroundModes: [location]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.anirudh.wakeprobe
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: ProbeWidgets
+  ProbeWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widget
+      - path: Shared
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Probe Widgets
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.anirudh.wakeprobe.widget
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) WIDGET_EXTENSION"
+  WakeProbeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: WakeProbe
+schemes:
+  WakeProbe:
+    build:
+      targets:
+        WakeProbe: all
+        ProbeWidgets: all
+    test:
+      targets:
+        - WakeProbeTests
