@@ -5,6 +5,9 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Gates") {
+                    NavigationLink("Alarms: G1 G2 G5 G8 G9") { AlarmGatesView() }
+                }
                 Section("Log") {
                     ShareLink(item: GateLog.shared.fileURL) { Label("Export gate log", systemImage: "square.and.arrow.up") }
                     if GateLog.shared.failedWrites > 0 {
