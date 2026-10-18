@@ -53,14 +53,28 @@ enum AlarmProbe {
     /// G9: read steps for the last 45 min and time how long it takes.
     static func logStepsLast45(gate: String) async {
         let started = Date()
+        GateLog.shared.record(gate, "steps-start", [:])
+        let pedometer = CMPedometer()
         let steps: Int? = await withCheckedContinuation { cont in
-            CMPedometer().queryPedometerData(from: Date().addingTimeInterval(-45 * 60), to: Date()) { data, error in
+            pedometer.queryPedometerData(from: Date().addingTimeInterval(-45 * 60), to: Date()) { data, error in
+                _ = pedometer
                 if let error { GateLog.shared.record(gate, "steps-error", ["error": "\(error)"]) }
                 cont.resume(returning: data?.numberOfSteps.intValue)
             }
         }
         GateLog.shared.record(gate, "steps45", ["steps": steps.map(String.init) ?? "nil",
-                                                "ms": String(Int(Date().timeIntervalSince(started) * 1000))])
+                                                "ms": String(Int(Date().timeIntervalSince(started) * 1000)),
+                                                "auth": "\(CMPedometer.authorizationStatus().rawValue)"])
+    }
+}
+
+enum ProcessClock {
+    static let launched = Date()
+    private static var seen = false
+    /// True only on the first call in this process (cold launch marker for G9).
+    static func markFirst() -> Bool {
+        defer { seen = true }
+        return !seen
     }
 }
 
@@ -72,14 +86,21 @@ struct ProbeStopIntent: LiveActivityIntent {
     init() { self.alarmID = ""; self.gate = "" }
 
     func perform() async throws -> some IntentResult {
-        GateLog.shared.record(gate, "stop-intent-ran", ["id": alarmID])
-        await AlarmProbe.logStepsLast45(gate: gate)                       // G9
+        GateLog.shared.record(gate, "stop-intent-ran", [
+            "id": alarmID,
+            "processAgeMs": String(Int(Date().timeIntervalSince(ProcessClock.launched) * 1000)),
+            "firstRecordThisProcess": "\(ProcessClock.markFirst())"])
         let d = UserDefaults.standard
-        if gate == "G5", d.bool(forKey: "g5.enabled"), d.integer(forKey: "g5.count") < 3 {
-            d.set(d.integer(forKey: "g5.count") + 1, forKey: "g5.count")
-            let newID = await AlarmProbe.reschedule(gate: "G5", after: 15)   // G5: re-ring from inside the intent
-            GateLog.shared.record("G5", newID == nil ? "reschedule-failed" : "rescheduled", ["round": "\(d.integer(forKey: "g5.count"))"])
+        if gate == "G5", d.bool(forKey: "g5.enabled") {
+            if d.integer(forKey: "g5.count") < 3 {
+                let newID = await AlarmProbe.reschedule(gate: "G5", after: 15)   // G5: re-ring from inside the intent
+                if newID != nil { d.set(d.integer(forKey: "g5.count") + 1, forKey: "g5.count") }
+                GateLog.shared.record("G5", newID == nil ? "reschedule-failed" : "rescheduled", ["round": "\(d.integer(forKey: "g5.count"))"])
+            } else {
+                GateLog.shared.record("G5", "cap-reached")
+            }
         }
+        await AlarmProbe.logStepsLast45(gate: gate)                       // G9, after G5 so a hung query cannot block it
         return .result()
     }
 }
@@ -88,13 +109,16 @@ struct AlarmGatesView: View {
     @State private var g2Date = Calendar.current.date(byAdding: .hour, value: 7 * 24 + 2, to: Date())!
     var body: some View {
         Form {
+            Section("Setup") {
+                Button("Allow motion access (G9 setup)") { Task { await AlarmProbe.logStepsLast45(gate: "G9-auth") } }
+            }
             Section("G1 rings through silent + Focus (2 min)") {
                 Button("Schedule G1 in 2 min") { Task { await AlarmProbe.schedule(gate: "G1", at: .now + 120, sound: nil) } }
-                ResultButtons(gate: "G1")
+                ResultButtons(gate: "G1", options: ["rang-silent+focus", "no-ring-silent+focus", "rang-normal-mode"])
             }
             Section("G8 custom quiet-then-loud sound (2 min)") {
                 Button("Schedule G8 in 2 min") { Task { await AlarmProbe.schedule(gate: "G8", at: .now + 120, sound: "probe_ramp.wav") } }
-                ResultButtons(gate: "G8", options: ["quiet-then-loud", "flat-loud", "default-sound", "silent"])
+                ResultButtons(gate: "G8", options: ["quiet-then-loud", "flat-loud", "default-sound", "silent", "chime-inaudible"])
             }
             Section("G5 re-ring after Stop (3 rounds)") {
                 Button("Arm G5 and schedule in 1 min") {
