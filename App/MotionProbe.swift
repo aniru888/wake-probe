@@ -40,10 +40,12 @@ struct MotionGateView: View {
                 let unknown = inWindow.filter { $0.unknown }.count
                 let inEffect = raw.last { $0.startDate <= m.time } ?? raw.first { $0.startDate >= m.time }
                 let firstOffset = inEffect.map { "\(Int($0.startDate.timeIntervalSince(m.time)))" } ?? "none"
+                let threshold: TimeInterval = 360
                 let verdict: String
-                if place == "pocket-walking" { verdict = longest < 360 ? "PASS" : "FAIL" }
-                else { verdict = longest >= 360 ? "PASS" : "FAIL" }
-                lines.append("\(place): longest still \(Int(longest))s of \(Int(window))s \u{2192} \(verdict)")
+                if window < threshold || (inWindow.isEmpty && inEffect == nil) { verdict = "INCONCLUSIVE" }
+                else if place == "pocket-walking" { verdict = longest < threshold ? "PASS" : "FAIL" }
+                else { verdict = longest >= threshold ? "PASS" : "FAIL" }
+                lines.append("\(place): longest still \(Int(longest))s of \(Int(window))s, \(inWindow.count) samples \u{2192} \(verdict)")
                 GateLog.shared.record("G4", "analysis", ["where": place, "longestStillSec": "\(Int(longest))",
                                                          "windowSec": "\(Int(window))", "verdict": verdict,
                                                          "samples": "\(inWindow.count)", "lowConfidence": "\(lowConfidence)",
