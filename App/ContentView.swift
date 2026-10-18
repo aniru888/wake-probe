@@ -9,6 +9,7 @@ struct ContentView: View {
                     NavigationLink("Alarms: G1 G2 G5 G8 G9") { AlarmGatesView() }
                     NavigationLink("Defuse: G3") { DefuseGateView() }
                     NavigationLink("Stillness: G4") { MotionGateView() }
+                    NavigationLink("Geofence: G7") { GeofenceGateView() }
                 }
                 Section("Log") {
                     ShareLink(item: GateLog.shared.fileURL) { Label("Export gate log", systemImage: "square.and.arrow.up") }
