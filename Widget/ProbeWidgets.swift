@@ -30,7 +30,7 @@ struct DefuseLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: DefuseAttributes.self) { context in
             HStack {
-                Text(timerInterval: Date()...context.state.deadline, countsDown: true).monospacedDigit()
+                Text(timerInterval: context.state.deadline.addingTimeInterval(-LiveWindow.seconds)...context.state.deadline, countsDown: true).monospacedDigit()
                 Spacer()
                 Button(intent: DefuseIntent()) { Text("Still up (\(context.state.taps))") }
             }
@@ -41,7 +41,7 @@ struct DefuseLiveActivity: Widget {
                     Button(intent: DefuseIntent()) { Text("Still up") }
                 }
             } compactLeading: { Text("⏱") } compactTrailing: {
-                Text(timerInterval: Date()...context.state.deadline, countsDown: true).monospacedDigit().frame(width: 44)
+                Text(timerInterval: context.state.deadline.addingTimeInterval(-LiveWindow.seconds)...context.state.deadline, countsDown: true).monospacedDigit().frame(width: 44)
             } minimal: { Text("⏱") }
         }
     }

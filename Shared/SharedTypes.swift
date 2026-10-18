@@ -6,6 +6,8 @@ import AppIntents
 /// Empty metadata is allowed: "The implementation can be empty." (AlarmMetadata docs)
 struct ProbeMetadata: AlarmMetadata {}
 
+enum LiveWindow { static let seconds: TimeInterval = 180 }
+
 struct DefuseAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var deadline: Date
