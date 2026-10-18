@@ -28,6 +28,7 @@ jobs:
           APP=$(find build/dd/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -type d | head -1)
           test -n "$APP"
           test -d "$APP/PlugIns/ProbeWidgets.appex"
+          test -f "$APP/probe_ramp.wav"
           rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/ && zip -qr WakeProbe.ipa Payload
           ls -la WakeProbe.ipa
       - uses: actions/upload-artifact@v4
