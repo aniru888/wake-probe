@@ -38,7 +38,7 @@ struct MotionGateView: View {
                 let inWindow = raw.filter { $0.startDate >= m.time && $0.startDate <= end }
                 let lowConfidence = inWindow.filter { $0.confidence == .low }.count
                 let unknown = inWindow.filter { $0.unknown }.count
-                let inEffect = raw.last { $0.startDate <= m.time } ?? raw.first { $0.startDate >= m.time }
+                let inEffect = raw.last { $0.startDate <= m.time } ?? raw.first { $0.startDate >= m.time && $0.startDate <= end }
                 let firstOffset = inEffect.map { "\(Int($0.startDate.timeIntervalSince(m.time)))" } ?? "none"
                 let threshold: TimeInterval = 360
                 let verdict: String
